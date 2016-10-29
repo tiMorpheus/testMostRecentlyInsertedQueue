@@ -109,7 +109,7 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
     }
 
     public Item poll() {
-/*        for(;;) {
+        for(;;) {
             Node<Item> beforeFirstNode = head;
             Node<Item> tailOnPolling = tail;
             Node<Item> firstNode = beforeFirstNode.getNext();
@@ -123,15 +123,15 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
                 } else if (casHead(beforeFirstNode, firstNode)) {
                     Item item = firstNode.getElement();
                     if (item != null) {
-                        firstNode.setElement(null);
+                        firstNode.setItem(null);
                         amountOfElements.decrementAndGet();
                         return item;
                     }
                 }
             }
-        }*/
+        }
 
-        restartFromHead:
+/*        restartFromHead:
         for (; ; ) {
             for (Node<Item> h = head, p = h, q; ; ) {
                 Item item = p.getElement();
@@ -150,7 +150,7 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
                 else
                     p = q;
             }
-        }
+        }*/
     }
 
     public Item peek() {
@@ -176,6 +176,10 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
 
     public int size() {
         return amountOfElements.intValue();
+    }
+
+    public boolean isEmpty() {
+        return head == null;
     }
 
     public void clear() {
