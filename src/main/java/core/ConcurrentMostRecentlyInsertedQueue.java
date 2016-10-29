@@ -33,7 +33,7 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
         private final AtomicReferenceFieldUpdater<Node, Object> elementUpdater =
                 AtomicReferenceFieldUpdater.newUpdater(Node.class, Object.class, "item");
 
-        private final AtomicReferenceFieldUpdater<Node,Node> nextUpdater =
+        private final AtomicReferenceFieldUpdater<Node, Node> nextUpdater =
                 AtomicReferenceFieldUpdater.newUpdater(Node.class, Node.class, "next");
 
         public Item getElement() {
@@ -52,7 +52,7 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
             return next;
         }
 
-        public boolean casNext(Node<Item> expect, Node<Item> update){
+        public boolean casNext(Node<Item> expect, Node<Item> update) {
             return nextUpdater.compareAndSet(this, expect, update);
         }
 
@@ -64,13 +64,13 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
     private final AtomicReferenceFieldUpdater<ConcurrentMostRecentlyInsertedQueue, Node> tailUpdater =
             AtomicReferenceFieldUpdater.newUpdater(ConcurrentMostRecentlyInsertedQueue.class, Node.class, "tail");
     private final AtomicReferenceFieldUpdater<ConcurrentMostRecentlyInsertedQueue, Node> headUpdater =
-            AtomicReferenceFieldUpdater.newUpdater(ConcurrentMostRecentlyInsertedQueue.class,  Node.class, "head");
+            AtomicReferenceFieldUpdater.newUpdater(ConcurrentMostRecentlyInsertedQueue.class, Node.class, "head");
 
-    public boolean casHead(Node<Item> expect, Node<Item> update){
-        return headUpdater.compareAndSet(this,expect,update);
+    public boolean casHead(Node<Item> expect, Node<Item> update) {
+        return headUpdater.compareAndSet(this, expect, update);
     }
 
-    public boolean casTail(Node<Item> expect, Node<Item> update){
+    public boolean casTail(Node<Item> expect, Node<Item> update) {
         return tailUpdater.compareAndSet(this, expect, update);
     }
 
@@ -80,7 +80,7 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
 
         final Node<Item> newNode = new Node<>(item);
 
-        for (;;) {
+        for (; ; ) {
             Node<Item> expected = tail;
             Node<Item> updated = expected.getNext();
             if (expected == tail && amountOfElements.intValue() < capacity.intValue()) {
@@ -93,8 +93,7 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
                 } else {
                     casTail(expected, updated);
                 }
-            }
-            else if (expected == tail && amountOfElements.intValue() >= capacity.intValue()) {
+            } else if (expected == tail && amountOfElements.intValue() >= capacity.intValue()) {
                 if (updated == null) {
                     if (expected.casNext(updated, newNode)) {
                         poll();
@@ -133,8 +132,8 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
         }*/
 
         restartFromHead:
-        for (;;) {
-            for (Node<Item> h = head, p = h, q;;) {
+        for (; ; ) {
+            for (Node<Item> h = head, p = h, q; ; ) {
                 Item item = p.getElement();
 
                 if (item != null && p.casItem(item, null)) {
@@ -143,12 +142,10 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
                     if (p != h) // hop two nodes at a time
                         updateHead(h, ((q = p.getNext()) != null) ? q : p);
                     return item;
-                }
-                else if ((q = p.next) == null) {
+                } else if ((q = p.next) == null) {
                     updateHead(h, p);
                     return null;
-                }
-                else if (p == q)
+                } else if (p == q)
                     continue restartFromHead;
                 else
                     p = q;
@@ -158,14 +155,13 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
 
     public Item peek() {
         restartFromHead:
-        for (;;) {
-            for (Node<Item> h = head, p = h, q;;) {
+        for (; ; ) {
+            for (Node<Item> h = head, p = h, q; ; ) {
                 Item item = p.getElement();
                 if (item != null || (q = p.getNext()) == null) {
                     updateHead(h, p);
                     return item;
-                }
-                else if (p == q)
+                } else if (p == q)
                     continue restartFromHead;
                 else
                     p = q;
@@ -183,7 +179,7 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
     }
 
     public void clear() {
-        while (!isEmpty()){
+        while (!isEmpty()) {
             poll();
         }
     }
@@ -200,7 +196,6 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
     }
 
 
-
     public Iterator<Item> iterator() {
         return new ConcurrentMostRecentlyInsertedIterator();
     }
@@ -214,12 +209,13 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
         ConcurrentMostRecentlyInsertedIterator() {
             advance();
         }
+
         private Item advance() {
             lastNode = currentNode;
             Item x = nextItem;
 
-            Node<Item> newNode = (currentNode == null)? firstNode() : currentNode.getNext();
-            for (;;) {
+            Node<Item> newNode = (currentNode == null) ? firstNode() : currentNode.getNext();
+            for (; ; ) {
                 if (newNode == null) {
                     currentNode = null;
                     nextItem = null;
@@ -253,7 +249,7 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
     }
 
     Node<Item> firstNode() {
-        for (;;) {
+        for (; ; ) {
             Node<Item> h = head;
             Node<Item> t = tail;
             Node<Item> first = h.getNext();

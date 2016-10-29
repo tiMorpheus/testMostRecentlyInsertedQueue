@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 
-public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> implements Queue<Item>,Iterable<Item>{
+public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> implements Queue<Item>, Iterable<Item> {
 
     private Node<Item> head;
     private Node<Item> tail;
@@ -13,7 +13,7 @@ public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> impleme
     private int amountOfElements;
 
     //helper class
-    private static class Node<Item>{
+    private static class Node<Item> {
         private Item item;
         private Node<Item> next;
     }
@@ -45,18 +45,18 @@ public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> impleme
 
     /**
      * Inserts the specified element into this queue if it is possible to do so immediately
-     *  without violating capacity restrictions.
+     * without violating capacity restrictions.
      *
-     * @param  item the item to add
+     * @param item the item to add
      */
     public boolean offer(Item item) {
 
         checkNotNull(item);
-        if (amountOfElements < capacity){
+        if (amountOfElements < capacity) {
             addItem(item);
             amountOfElements++;
             return true;
-        } else if (amountOfElements >= capacity){
+        } else if (amountOfElements >= capacity) {
             poll();
             addItem(item);
             amountOfElements++;
@@ -68,13 +68,13 @@ public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> impleme
     /**
      * Adds the item to this queue.
      *
-     * @param  item the item to add
+     * @param item the item to add
      */
     private void addItem(Item item) {
         Node current = tail;
         tail = new Node<Item>();
         tail.item = item;
-        if (isEmpty()){
+        if (isEmpty()) {
             head = tail;
         } else {
             current.next = tail;
@@ -89,14 +89,14 @@ public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> impleme
      */
     public Item poll() {
 
-        if (isEmpty()){
+        if (isEmpty()) {
             throw new NoSuchElementException("Queue is empty");
         }
         Item item = head.item;
         head = head.next;
         amountOfElements--;
 
-        if (isEmpty()){
+        if (isEmpty()) {
             tail = null;
         }
 
@@ -110,7 +110,7 @@ public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> impleme
      * @throws NoSuchElementException if this queue is empty
      */
     public Item peek() {
-        if (isEmpty()){
+        if (isEmpty()) {
             throw new NoSuchElementException("Queue is empty");
         }
         return head.item;
@@ -118,10 +118,9 @@ public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> impleme
 
     /**
      * Clear the queue
-     *
      */
     public void clear() {
-        while (!isEmpty()){
+        while (!isEmpty()) {
             poll();
         }
     }
@@ -141,7 +140,7 @@ public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> impleme
      *
      * @return an iterator that iterates over the items in this queue in FIFO order
      */
-    public Iterator<Item> iterator()  {
+    public Iterator<Item> iterator() {
         return new MyQueueIterator<Item>(head);
     }
 
@@ -153,16 +152,16 @@ public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> impleme
             current = first;
         }
 
-        public boolean hasNext()  {
+        public boolean hasNext() {
             return (current != null);
         }
 
-        public void remove(){
+        public void remove() {
             throw new UnsupportedOperationException();
         }
 
         public Item next() {
-            if (!hasNext()){
+            if (!hasNext()) {
                 throw new NoSuchElementException();
             }
             Item item = current.item;

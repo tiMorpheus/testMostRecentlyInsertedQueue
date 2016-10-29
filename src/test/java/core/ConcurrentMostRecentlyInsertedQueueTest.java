@@ -27,23 +27,23 @@ public class ConcurrentMostRecentlyInsertedQueueTest {
 
 
     @Test
-    public void isEmptyTest(){
-        Assert.assertEquals(false,testQueue.isEmpty());
+    public void isEmptyTest() {
+        Assert.assertEquals(false, testQueue.isEmpty());
     }
 
     @Test
-    public void clearQueueTest(){
+    public void clearQueueTest() {
         testQueue.clear();
         Assert.assertEquals(0, testQueue.size());
     }
 
     @Test
-    public void toStringTest(){
+    public void toStringTest() {
         Assert.assertEquals("[1, 2, 3]", testQueue.toString());
     }
 
     @Test
-    public void insertNullValueIntoClearQueueTest(){
+    public void insertNullValueIntoClearQueueTest() {
         thrown.expect(NullPointerException.class);
 
         testQueue.clear();
@@ -51,14 +51,14 @@ public class ConcurrentMostRecentlyInsertedQueueTest {
     }
 
     @Test
-    public void insertNullValueIntoOverflowQueueTest(){
+    public void insertNullValueIntoOverflowQueueTest() {
         thrown.expect(NullPointerException.class);
 
         testQueue.offer(null);
     }
 
     @Test
-    public void insertIntoStringQueueValuesTest(){
+    public void insertIntoStringQueueValuesTest() {
 
         testStringQueue.offer("One");
         testStringQueue.offer("Two");
@@ -70,14 +70,14 @@ public class ConcurrentMostRecentlyInsertedQueueTest {
     }
 
     @Test
-    public void pollTest(){
-        Assert.assertEquals( (Integer) 1 , testQueue.poll());
-        Assert.assertEquals( (Integer) 2 , testQueue.poll());
-        Assert.assertEquals( (Integer) 3 , testQueue.poll());
+    public void pollTest() {
+        Assert.assertEquals((Integer) 1, testQueue.poll());
+        Assert.assertEquals((Integer) 2, testQueue.poll());
+        Assert.assertEquals((Integer) 3, testQueue.poll());
     }
 
     @Test
-    public void pollEmptyQueueTest(){
+    public void pollEmptyQueueTest() {
         thrown.expect(NoSuchElementException.class);
 
         testQueue.clear();
@@ -85,13 +85,13 @@ public class ConcurrentMostRecentlyInsertedQueueTest {
     }
 
     @Test
-    public void peekTest(){
+    public void peekTest() {
 
         Assert.assertEquals((Integer) 1, testQueue.peek());
     }
 
     @Test
-    public void peekEmptyQueue(){
+    public void peekEmptyQueue() {
 
         thrown.expect(NoSuchElementException.class);
 
