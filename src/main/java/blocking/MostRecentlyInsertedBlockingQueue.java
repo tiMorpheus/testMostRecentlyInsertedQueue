@@ -10,17 +10,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
-        implements BlockingQueue<Item> {
+public class MostRecentlyInsertedBlockingQueue<E> extends AbstractQueue<E>
+        implements BlockingQueue<E> {
 
     /**
      * Linked list node class
      */
-    private static class Node<Item> {
-        Item item;
-        Node<Item> next;
+    private static class Node<E> {
+        E item;
+        Node<E> next;
 
-        public Node(Item item) {
+        public Node(E item) {
             this.item = item;
         }
     }
@@ -29,13 +29,13 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
      * Head of linked list.
      * Invariant: head.item == null
      */
-    transient Node<Item> head;
+    transient Node<E> head;
 
     /**
      * Tail of linked list.
      * Invariant: last.next == null
      */
-    private transient Node<Item> tail;
+    private transient Node<E> tail;
 
     /**
      * Current number of elements
@@ -99,7 +99,7 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
      *
      * @param node the node
      */
-    private void insertItemToTail(Node<Item> node) {
+    private void insertItemToTail(Node<E> node) {
         tail = tail.next = node;
     }
 
@@ -108,12 +108,12 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
      *
      * @return the node
      */
-    private Item removeNodeFromHead() {
-        Node<Item> h = head;
-        Node<Item> first = h.next;
+    private E removeNodeFromHead() {
+        Node<E> h = head;
+        Node<E> first = h.next;
         h.next = h; // help GC
         head = first;
-        Item x = first.item;
+        E x = first.item;
         first.item = null;
         return x;
     }
@@ -162,11 +162,11 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
      * @throws InterruptedException {@inheritDoc}
      * @throws NullPointerException {@inheritDoc}
      */
-    public void put(Item item) throws InterruptedException {
+    public void put(E item) throws InterruptedException {
         checkNotNull(item);
 
         int c = -1;
-        Node<Item> node = new Node<>(item);
+        Node<E> node = new Node<>(item);
         final ReentrantLock putLock = this.putLock;
         final AtomicInteger count = this.amountOfElements;
         putLock.lockInterruptibly();
@@ -203,48 +203,49 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
      * @throws InterruptedException {@inheritDoc}
      * @throws NullPointerException {@inheritDoc}
      */
-    public boolean offer(Item item, long timeout, TimeUnit unit) throws InterruptedException {
+    public boolean offer(E item, long timeout, TimeUnit unit) throws InterruptedException {
         checkNotNull(item);
 
         long nanos = unit.toNanos(timeout);
-        int c = -1;
+        putLock.lock();
+        Node<E> node = new Node<>(item);
         final ReentrantLock putLock = this.putLock;
-        final AtomicInteger count = this.amountOfElements;
-        putLock.lockInterruptibly();
-        try {
-            while (count.get() == capacity) {
-                if (nanos <= 0)
-                    return false;
-                nanos = notFull.awaitNanos(nanos);
+
+        if (amountOfElements.intValue() < capacity) {
+            try {
+                insertItemToTail(node);
+                amountOfElements.getAndIncrement();
+            } finally {
+                putLock.unlock();
             }
-            insertItemToTail(new Node<>(item));
-            c = count.getAndIncrement();
-            if (c + 1 < capacity)
-                notFull.signal();
-        } finally {
-            putLock.unlock();
+            return true;
+        } else {
+            try {
+                if(nanos <= 0){
+                    return false;
+                }
+                signalNotEmpty();
+                poll();
+                insertItemToTail(node);
+                amountOfElements.incrementAndGet();
+                notFull.awaitNanos(nanos);
+            } finally {
+                putLock.unlock();
+            }
+            return true;
         }
-        if (c == 0)
-            signalNotEmpty();
-        return true;
     }
 
     /**
-     * Inserts the specified element at the tail of this queue if it is
-     * possible to do so immediately without exceeding the queue's capacity,
-     * returning {@code true} upon success and {@code false} if this queue
-     * is full.
-     * When using a capacity-restricted queue, this method is generally
-     * preferable to method {@link BlockingQueue#add add}, which can fail to
-     * insert an element only by throwing an exception.
+     * Inserts the specified element at the tail of this queue
      *
      * @throws NullPointerException if the specified element is null
      */
-    public boolean offer(Item item) {
+    public boolean offer(E item) {
         checkNotNull(item);
 
         putLock.lock();
-        Node<Item> node = new Node<>(item);
+        Node<E> node = new Node<>(item);
         final ReentrantLock putLock = this.putLock;
 
         if (amountOfElements.intValue() < capacity) {
@@ -269,8 +270,8 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
     }
 
 
-    public Item take() throws InterruptedException {
-        Item x;
+    public E take() throws InterruptedException {
+        E x;
         int c = -1;
         final AtomicInteger count = this.amountOfElements;
         final ReentrantLock takeLock = this.takeLock;
@@ -291,8 +292,8 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
         return x;
     }
 
-    public Item poll(long timeout, TimeUnit unit) throws InterruptedException {
-        Item x = null;
+    public E poll(long timeout, TimeUnit unit) throws InterruptedException {
+        E x = null;
         int c = -1;
         long nanos = unit.toNanos(timeout);
         final AtomicInteger count = this.amountOfElements;
@@ -316,12 +317,17 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
         return x;
     }
 
-
-    public Item poll() {
+    /**
+     * Retrieves and removes the head of this queue.
+     *
+     * @return the head of this queue
+     * @throws NoSuchElementException if this queue is empty
+     */
+    public E poll() {
         final AtomicInteger count = this.amountOfElements;
         if (count.get() == 0)
             throw new NoSuchElementException("Empty queue!!");
-        Item x = null;
+        E x = null;
         int c = -1;
         final ReentrantLock takeLock = this.takeLock;
         takeLock.lock();
@@ -340,8 +346,13 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
         return x;
     }
 
-
-    public Item peek() {
+    /**
+     * Retrieves, but does not remove, the head of this queue
+     *
+     * @return the head of this queue
+     * @throws NoSuchElementException if this queue is empty
+     */
+    public E peek() {
         if (amountOfElements.get() == 0) {
             throw new NoSuchElementException("Empty queue!!");
         }
@@ -349,7 +360,7 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
         final ReentrantLock takeLock = this.takeLock;
         takeLock.lock();
         try {
-            Node<Item> first = head.next;
+            Node<E> first = head.next;
             if (first == null)
                 return null;
             else
@@ -363,7 +374,7 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
     /**
      * Unlinks interior Node p with predecessor trail.
      */
-    void unlink(Node<Item> p, Node<Item> trail) {
+    void unlink(Node<E> p, Node<E> trail) {
         // assert isFullyLocked();
         // p.next is not changed, to allow iterators that are
         // traversing p to maintain their weak-consistency guarantee.
@@ -382,7 +393,7 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
     public void clear() {
         fullyLock();
         try {
-            for (Node<Item> p, h = head; (p = h.next) != null; h = p) {
+            for (Node<E> p, h = head; (p = h.next) != null; h = p) {
                 h.next = h;
                 p.item = null;
             }
@@ -401,7 +412,7 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
      * @throws NullPointerException          {@inheritDoc}
      * @throws IllegalArgumentException      {@inheritDoc}
      */
-    public int drainTo(Collection<? super Item> c) {
+    public int drainTo(Collection<? super E> c) {
         return drainTo(c, Integer.MAX_VALUE);
     }
 
@@ -411,7 +422,7 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
      * @throws NullPointerException          {@inheritDoc}
      * @throws IllegalArgumentException      {@inheritDoc}
      */
-    public int drainTo(Collection<? super Item> c, int maxElements) {
+    public int drainTo(Collection<? super E> c, int maxElements) {
         if (c == null)
             throw new NullPointerException();
         if (c == this)
@@ -424,11 +435,11 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
         try {
             int n = Math.min(maxElements, amountOfElements.get());
             // count.get provides visibility to first n Nodes
-            Node<Item> h = head;
+            Node<E> h = head;
             int i = 0;
             try {
                 while (i < n) {
-                    Node<Item> p = h.next;
+                    Node<E> p = h.next;
                     c.add(p.item);
                     p.item = null;
                     h.next = h;
@@ -477,20 +488,20 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
             throw new NullPointerException("You can't put a 'null' element");
     }
 
-    public Iterator<Item> iterator() {
+    public Iterator<E> iterator() {
         return new Itr();
     }
 
-    private class Itr implements Iterator<Item> {
+    private class Itr implements Iterator<E> {
         /*
          * Basic weakly-consistent iterator.  At all times hold the next
          * item to hand out so that if hasNext() reports true, we will
          * still have it to return even if lost race with a take etc.
          */
 
-        private Node<Item> current;
-        private Node<Item> lastRet;
-        private Item currentElement;
+        private Node<E> current;
+        private Node<E> lastRet;
+        private E currentElement;
 
         Itr() {
             fullyLock();
@@ -514,9 +525,9 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
          * - dequeued nodes (p.next == p)
          * - (possibly multiple) interior removed nodes (p.item == null)
          */
-        private Node<Item> nextNode(Node<Item> p) {
+        private Node<E> nextNode(Node<E> p) {
             for (; ; ) {
-                Node<Item> s = p.next;
+                Node<E> s = p.next;
                 if (s == p)
                     return head.next;
                 if (s == null || s.item != null)
@@ -525,12 +536,12 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
             }
         }
 
-        public Item next() {
+        public E next() {
             fullyLock();
             try {
                 if (current == null)
                     throw new NoSuchElementException();
-                Item x = currentElement;
+                E x = currentElement;
                 lastRet = current;
                 current = nextNode(current);
                 currentElement = (current == null) ? null : current.item;
@@ -545,9 +556,9 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
                 throw new IllegalStateException();
             fullyLock();
             try {
-                Node<Item> node = lastRet;
+                Node<E> node = lastRet;
                 lastRet = null;
-                for (Node<Item> trail = head, p = trail.next;
+                for (Node<E> trail = head, p = trail.next;
                      p != null;
                      trail = p, p = p.next) {
                     if (p == node) {
@@ -564,14 +575,14 @@ public class MostRecentlyInsertedBlockingQueue<Item> extends AbstractQueue<Item>
     public String toString() {
         fullyLock();
         try {
-            Node<Item> p = head.next;
+            Node<E> p = head.next;
             if (p == null)
                 return "[]";
 
             StringBuilder sb = new StringBuilder();
             sb.append('[');
             for (; ; ) {
-                Item item = p.item;
+                E item = p.item;
                 sb.append(item == this ? "(this Collection)" : item);
                 p = p.next;
                 if (p == null)
