@@ -90,6 +90,7 @@ public class MostRecentlyInsertedQueueTest {
     public void peekTest() {
 
         Assert.assertEquals((Integer) 1, testQueue.peek());
+        Assert.assertEquals(3, testQueue.size());
     }
 
     @Test

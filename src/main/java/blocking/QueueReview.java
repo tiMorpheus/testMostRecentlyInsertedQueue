@@ -1,14 +1,11 @@
-package core;
-
-import concurrent.ConcurrentMostRecentlyInsertedQueue;
+package blocking;
 
 import java.util.Queue;
 
 public class QueueReview {
     public static void main(String[] args) {
-
-        Queue<Integer> queue = new ConcurrentMostRecentlyInsertedQueue<>(3);
-
+        Queue<Integer> queue = new MostRecentlyInsertedBlockingQueue<>(3);
+        System.out.println("START TEST");
         queue.offer(1);             // queue.size(): 1, contents (head -> tail): [ 1 ]
         System.out.println(queue);
         queue.offer(2);             // queue.size(): 2, contents (head -> tail): [ 1, 2 ]

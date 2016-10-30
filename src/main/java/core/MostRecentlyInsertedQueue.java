@@ -5,7 +5,8 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 
-public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> implements Queue<Item>, Iterable<Item> {
+public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> implements
+        Queue<Item> {
 
     private Node<Item> head;
     private Node<Item> tail;
@@ -19,6 +20,7 @@ public class MostRecentlyInsertedQueue<Item> extends AbstractQueue<Item> impleme
     }
 
     public MostRecentlyInsertedQueue(int capacity) {
+        if (capacity <= 0) throw new IllegalArgumentException();
         this.capacity = capacity;
         this.amountOfElements = 0;
         this.head = null;
