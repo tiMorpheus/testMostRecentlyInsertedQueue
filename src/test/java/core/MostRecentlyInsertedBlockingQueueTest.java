@@ -1,11 +1,13 @@
 package core;
 
 import blocking.MostRecentlyInsertedBlockingQueue;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.testng.annotations.BeforeClass;
 
 import java.util.NoSuchElementException;
 
@@ -13,7 +15,12 @@ public class MostRecentlyInsertedBlockingQueueTest {
 
     static MostRecentlyInsertedBlockingQueue<Integer> testQueue = new MostRecentlyInsertedBlockingQueue<>(3);
     static MostRecentlyInsertedBlockingQueue<String> testStringQueue = new MostRecentlyInsertedBlockingQueue<>(5);
+    static MostRecentlyInsertedBlockingQueue<Integer> testConcurrency;
 
+    @BeforeClass
+    public void setUp(){
+        testConcurrency = new MostRecentlyInsertedBlockingQueue<>(5);
+    }
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -102,4 +109,16 @@ public class MostRecentlyInsertedBlockingQueueTest {
         testStringQueue.clear();
         testStringQueue.peek();
     }
+
+    @org.testng.annotations.Test(threadPoolSize = 30, invocationCount = 100, timeOut = 10000)
+    public void concurrencyTest() {
+        testConcurrency.offer(1);
+        testConcurrency.offer(2);
+        testConcurrency.offer(3);
+        testConcurrency.offer(4);
+        testConcurrency.offer(5);
+        testConcurrency.offer(6);
+        System.out.println(testConcurrency.toString());
+    }
+
 }

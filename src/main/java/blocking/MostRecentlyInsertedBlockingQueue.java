@@ -29,13 +29,13 @@ public class MostRecentlyInsertedBlockingQueue<E> extends AbstractQueue<E>
      * Head of linked list.
      * Invariant: head.item == null
      */
-    transient Node<E> head;
+    Node<E> head;
 
     /**
      * Tail of linked list.
      * Invariant: last.next == null
      */
-    private transient Node<E> tail;
+    private Node<E> tail;
 
     /**
      * Current number of elements
@@ -221,7 +221,7 @@ public class MostRecentlyInsertedBlockingQueue<E> extends AbstractQueue<E>
             return true;
         } else {
             try {
-                if(nanos <= 0){
+                if (nanos <= 0) {
                     return false;
                 }
                 signalNotEmpty();
