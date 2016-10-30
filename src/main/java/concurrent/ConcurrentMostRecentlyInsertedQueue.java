@@ -35,10 +35,6 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
             return element;
         }
 
-        public boolean casElement(Item expect, Item update) {
-            return elementUpdater.compareAndSet(this, expect, update);
-        }
-
         public void setElement(Item element) {
             elementUpdater.set(this, element);
         }
@@ -49,10 +45,6 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
 
         public boolean casNext(Node<Item> expect, Node<Item> update) {
             return nextUpdater.compareAndSet(this, expect, update);
-        }
-
-        public void setNext(Node next) {
-            nextUpdater.set(this, next);
         }
     }
 
@@ -134,13 +126,12 @@ public class ConcurrentMostRecentlyInsertedQueue<Item> extends AbstractQueue<Ite
 
     public Item peek() {
         restartFromHead:
-        for (;;) {
-            for (Node<Item> h = head, p = h, q;;) {
+        for (; ; ) {
+            for (Node<Item> h = head, p = h, q; ; ) {
                 Item item = p.element;
                 if (item != null || (q = p.next) == null) {
                     return item;
-                }
-                else if (p == q)
+                } else if (p == q)
                     continue restartFromHead;
                 else
                     p = q;
