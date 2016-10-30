@@ -1,13 +1,12 @@
 package core;
 
-import blocking.MostRecentlyInsertedBlockingQueue;
 
+import blocking.MostRecentlyInsertedBlockingQueue;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.testng.annotations.BeforeClass;
 
 import java.util.NoSuchElementException;
 
@@ -15,15 +14,6 @@ public class MostRecentlyInsertedBlockingQueueTest {
 
     static MostRecentlyInsertedBlockingQueue<Integer> testQueue = new MostRecentlyInsertedBlockingQueue<>(3);
     static MostRecentlyInsertedBlockingQueue<String> testStringQueue = new MostRecentlyInsertedBlockingQueue<>(5);
-    static MostRecentlyInsertedBlockingQueue<Integer> testConcurrency;
-
-    @BeforeClass
-    public void setUp(){
-        testConcurrency = new MostRecentlyInsertedBlockingQueue<>(5);
-    }
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @Before
     public void init() throws Exception {
@@ -34,6 +24,9 @@ public class MostRecentlyInsertedBlockingQueueTest {
         testQueue.offer(4);
         testQueue.offer(5);
     }
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void ititTest() {
@@ -50,7 +43,6 @@ public class MostRecentlyInsertedBlockingQueueTest {
         testQueue.clear();
         Assert.assertEquals(0, testQueue.size());
     }
-
 
     @Test
     public void insertNullValueIntoClearQueueTest() {
@@ -75,7 +67,6 @@ public class MostRecentlyInsertedBlockingQueueTest {
         testStringQueue.offer("Three");
         testStringQueue.offer("Four");
         testStringQueue.offer("Five");
-        System.out.println(testStringQueue.size());
         Assert.assertEquals("[One, Two, Three, Four, Five]", testStringQueue.toString());
     }
 
@@ -108,17 +99,6 @@ public class MostRecentlyInsertedBlockingQueueTest {
 
         testStringQueue.clear();
         testStringQueue.peek();
-    }
-
-    @org.testng.annotations.Test(threadPoolSize = 30, invocationCount = 100, timeOut = 10000)
-    public void concurrencyTest() {
-        testConcurrency.offer(1);
-        testConcurrency.offer(2);
-        testConcurrency.offer(3);
-        testConcurrency.offer(4);
-        testConcurrency.offer(5);
-        testConcurrency.offer(6);
-        System.out.println(testConcurrency.toString());
     }
 
 }
