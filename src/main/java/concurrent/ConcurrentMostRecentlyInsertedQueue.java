@@ -35,6 +35,10 @@ public class ConcurrentMostRecentlyInsertedQueue<E> extends AbstractQueue<E>
             return element;
         }
 
+        public boolean casElement(E expect, E update) {
+            return elementUpdater.compareAndSet(this, expect, update);
+        }
+
         public void setElement(E element) {
             elementUpdater.set(this, element);
         }
@@ -45,6 +49,10 @@ public class ConcurrentMostRecentlyInsertedQueue<E> extends AbstractQueue<E>
 
         public boolean casNext(Node<E> expect, Node<E> update) {
             return nextUpdater.compareAndSet(this, expect, update);
+        }
+
+        public void setNext(Node next) {
+            nextUpdater.set(this, next);
         }
     }
 
